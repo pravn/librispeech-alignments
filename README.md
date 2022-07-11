@@ -1,5 +1,5 @@
 # LibriSpeech Alignments abd segmented output
-Lightly modified from Corentin's page. It splits utterances (after forced alignment) to give word level output and writes them to disc (segment_wavs.py).
+Lightly modified from Corentin's page. It splits utterances (after forced alignment) to give word level output and writes them to disc (segment_wavs.py). In addition, it also computes mels. Output is in .wav format, and is highly uncompressed.
 
 
 This repo contains links to download word alignments for [LibriSpeech](http://www.openslr.org/12/), generated using the [Montreal Forced Aligner](https://montreal-forced-aligner.readthedocs.io/).

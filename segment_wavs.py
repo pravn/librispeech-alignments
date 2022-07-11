@@ -51,14 +51,45 @@ def segment_utterance(audio_fpath, utterance_id, words, end_times):
 
     return segments
 
+def compute_mels(segments):
+    #from the following paper (audio2vec - word2vec for audio) 
+    #https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9060816
+    hop_len = int(sr * 0.01)# == 160 #10 ms 
+    win_len = int(sr * 0.025)# == 400 #25 ms 
+    n_mels = 64
 
-def write_data(target_book_dir, utterance_id, words, segments):
+    mels = []
+    for wav in segments:
+        #print('wav.shape', wav.shape)
+
+        if wav.size == 0:
+            print('Empty')
+            #wav = np.zeros(400)
+            wav = np.zeros(win_len)
+        #if np.empty(wav):
+        #    print('Empty')
+
+        #wav = np.zeros(400)        
+
+
+        normalized_wav = librosa.util.normalize(wav+1e-9)
+        #print(len(normalized_wav))
+        #stft = librosa.core.stft(normalized_wav, n_fft=256, win_length=160, hop_length=400)
+        #mel = librosa.feature.melspectrogram(stft, n_mels=64)
+        mel = librosa.feature.melspectrogram(normalized_wav, win_length=win_len, hop_length=hop_len, n_mels=64, sr=sr)
+        mellog = np.log(mel + 1e-9)
+        melnormalized = librosa.util.normalize(mellog)
     
-    assert len(words) == len(segments)
+        mels.append(melnormalized)
+
+    return mels
+
+
+def write_data(target_book_dir, utterance_id, words, segments, mels):
     
-
-
-    for i, (word, segment) in enumerate(zip(words, segments)):
+    assert len(words) == len(segments) and len(words) == len(mels)
+    
+    for i, (word, segment, mel) in enumerate(zip(words, segments, mels)):
 
         utterance_id_path = os.path.join(target_book_dir, utterance_id)
         with open(utterance_id_path + '_' + str(i) + '.txt', 'w') as wordfile:
@@ -66,6 +97,9 @@ def write_data(target_book_dir, utterance_id, words, segments):
 
         wordfile.close()
         librosa.output.write_wav(utterance_id_path + '_' + str(i) + '.wav', segment, sr)
+
+        #save mel
+        np.save(utterance_id_path + '_' + str(i) + '.npy', mel)
 
 
 
@@ -104,7 +138,9 @@ def process_dataset():
 
                     segments = segment_utterance(audio_fpath, utterance_id, words, end_times)
 
-                    write_data(target_book_dir, utterance_id, words, segments)
+                    mels = compute_mels(segments)
+
+                    write_data(target_book_dir, utterance_id, words, segments, mels)
 
 
                     
